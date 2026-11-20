@@ -42,7 +42,7 @@ Todo se ejecuta **en local**.
 - Docker.
 - Frameworks de frontend (React, Vue, etc.).
 - Tests automáticos.
-- **Git** (añadido a petición del equipo el 2026-11-20): se usa solo para guardar un commit al cerrar cada fase (título: `fase N`). Configuración de autor solo local, dentro del proyecto. Sin repositorios remotos (GitHub, etc.) salvo que el equipo lo pida. Al crear el proyecto NestJS, usa la opción `--skip-git` para que no cree un segundo repositorio dentro de `backend/`.
+- **Git** (añadido a petición del equipo el 2026-11-20): se usa solo para guardar un commit al cerrar cada fase (título: `fase N`). Configuración de autor solo local, dentro del proyecto. Repositorio remoto en GitHub (añadido a petición del equipo el 2026-11-20): `https://github.com/davidorozcox-png/DEL_PRUEBACIFO01.git` (público, rama `main`). El token de acceso se guarda en el Llavero de macOS, nunca en archivos del proyecto. Al crear el proyecto NestJS, usa la opción `--skip-git` para que no cree un segundo repositorio dentro de `backend/`.
 
 ## 4. Modelo de producto
 
@@ -174,3 +174,17 @@ Amplíalo a medida que aparezcan términos nuevos (una línea por término).
 - **Commit:** una "foto" del proyecto en un momento dado, con un título que explica qué contiene.
 - **.gitignore:** archivo con la lista de cosas que Git debe ignorar y no guardar.
 - **Command Line Tools:** paquete de herramientas de Apple para la terminal; incluye Git.
+- **GitHub:** web donde se guarda una copia del repositorio en internet.
+- **Remoto (origin):** la copia del repositorio que está en GitHub; `origin` es su nombre.
+- **Push:** subir los commits del Mac a GitHub.
+- **Token:** contraseña especial creada en GitHub para que la terminal pueda subir cambios.
+- **Llavero (Keychain):** el almacén de contraseñas de macOS.
+- **TypeScript:** JavaScript con tipos (se indica qué forma tienen los datos); es el lenguaje que usa NestJS.
+- **Controlador:** en NestJS, el archivo que define las rutas (endpoints) y qué hacer en cada una.
+- **Módulo:** en NestJS, la pieza que agrupa y registra los controladores de la API.
+- **fetch:** la función del navegador para hacer peticiones HTTP desde JavaScript.
+- **HTTP:** el "idioma" con el que navegador y servidor se piden y envían cosas (métodos GET, POST, PATCH, DELETE).
+- **Código de estado:** número que acompaña a cada respuesta HTTP: 200/201 = bien, 400 = datos incorrectos, 404 = no existe.
+- **curl:** comando de la terminal para hacer peticiones HTTP sin navegador.
+- **Preflight:** petición previa (OPTIONS) que el navegador manda para preguntar si tiene permiso CORS antes de un PATCH o DELETE.
+- **node_modules:** carpeta con los paquetes descargados por npm; pesa mucho y no se guarda en Git.

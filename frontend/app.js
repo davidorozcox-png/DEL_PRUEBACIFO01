@@ -1,10 +1,9 @@
-// FASE 1: los datos viven en esta lista, dentro de la memoria del navegador.
-// Al recargar la página, la lista vuelve a empezar con estos productos de ejemplo.
-let productos = [
-  { _id: '1', nombre: 'MacBook Air', marca: 'Apple', categoria: 'portátil', precio: 1199, stock: 5, descripcion: '' },
-  { _id: '2', nombre: 'Galaxy S24', marca: 'Samsung', categoria: 'móvil', precio: 899, stock: 10, descripcion: '' },
-  { _id: '3', nombre: 'WH-1000XM5', marca: 'Sony', categoria: 'auriculares', precio: 349, stock: 0, descripcion: '' },
-];
+// FASE 2: los datos ya NO viven aquí. Viven en el backend (la API en el puerto 3000).
+// Este archivo pide y envía los datos a la API con fetch (peticiones HTTP con JSON).
+const API = 'http://localhost:3000/productos';
+
+// Copia de lo último que nos mandó la API (solo para rellenar el formulario al editar)
+let productos = [];
 
 // Si estamos editando, aquí se guarda el _id del producto; si no, vale null
 let idEditando = null;
@@ -15,8 +14,34 @@ const tituloFormulario = document.getElementById('titulo-formulario');
 const botonGuardar = document.getElementById('boton-guardar');
 const botonCancelar = document.getElementById('boton-cancelar');
 
-// VER: dibuja la tabla con todos los productos de la lista
-function mostrarProductos() {
+// Envía una petición a la API y devuelve la respuesta en JSON.
+// Si la API responde con error, muestra el mensaje al usuario.
+async function pedirAPI(url, metodo = 'GET', datos) {
+  try {
+    const respuesta = await fetch(url, {
+      method: metodo,
+      headers: { 'Content-Type': 'application/json' },
+      body: datos ? JSON.stringify(datos) : undefined,
+    });
+    const json = await respuesta.json();
+    if (!respuesta.ok) {
+      const mensaje = Array.isArray(json.message) ? json.message.join('\n') : json.message;
+      alert('Error de la API:\n' + mensaje);
+      return null;
+    }
+    return json;
+  } catch (error) {
+    alert('No se puede conectar con la API. ¿Está arrancado el backend en el puerto 3000?');
+    return null;
+  }
+}
+
+// VER: pide la lista a la API (GET /productos) y dibuja la tabla
+async function mostrarProductos() {
+  const respuesta = await pedirAPI(API);
+  if (respuesta === null) return;
+  productos = respuesta;
+
   listado.innerHTML = '';
   for (const producto of productos) {
     const fila = document.createElement('tr');
@@ -63,19 +88,20 @@ function leerFormulario() {
 }
 
 // CREAR o EDITAR: se ejecuta al pulsar el botón del formulario
-formulario.addEventListener('submit', (evento) => {
+formulario.addEventListener('submit', async (evento) => {
   evento.preventDefault(); // evita que la página se recargue
   const datos = leerFormulario();
 
+  let resultado;
   if (idEditando === null) {
-    // Crear: se genera un _id nuevo y se añade a la lista
-    datos._id = String(Date.now());
-    productos.push(datos);
+    // Crear: POST /productos (el backend genera el _id)
+    resultado = await pedirAPI(API, 'POST', datos);
   } else {
-    // Editar: se sustituyen los datos del producto que tiene ese _id
-    productos = productos.map((p) => (p._id === idEditando ? { ...datos, _id: idEditando } : p));
+    // Editar: PATCH /productos/:id
+    resultado = await pedirAPI(API + '/' + idEditando, 'PATCH', datos);
   }
 
+  if (resultado === null) return; // hubo un error: se deja el formulario como está
   terminarEdicion();
   mostrarProductos();
 });
@@ -107,13 +133,14 @@ function terminarEdicion() {
 
 botonCancelar.addEventListener('click', terminarEdicion);
 
-// BORRAR: pide confirmación y quita el producto de la lista
-function borrarProducto(id) {
+// BORRAR: pide confirmación y envía DELETE /productos/:id
+async function borrarProducto(id) {
   if (!confirm('¿Seguro que quieres borrar este producto?')) return;
-  productos = productos.filter((p) => p._id !== id);
+  const resultado = await pedirAPI(API + '/' + id, 'DELETE');
+  if (resultado === null) return;
   if (idEditando === id) terminarEdicion();
   mostrarProductos();
 }
 
-// Al cargar la página, se dibuja el listado inicial
+// Al cargar la página, se pide el listado a la API
 mostrarProductos();

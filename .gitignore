@@ -5,3 +5,7 @@
 
 # Paquetes descargados por npm (aparecerán en la fase 2; se pueden volver a descargar)
 node_modules/
+
+# Código compilado que NestJS genera al arrancar (se vuelve a crear solo)
+dist/
+*.tsbuildinfo
