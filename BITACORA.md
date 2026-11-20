@@ -11,9 +11,9 @@ Sirve para no perder el contexto entre sesiones. **Se lee al empezar cada sesió
 
 | | |
 |---|---|
-| **Fase actual** | **Fase 3 cerrada** (commit "fase 3" subido a GitHub el 2026-11-20). Siguiente: **Fase 4 — Repaso**. |
+| **Fase actual** | **Fase 4 cerrada** (commit "fase 4" subido a GitHub el 2026-11-20). **Todas las fases del proyecto están terminadas.** Queda: que el equipo responda las preguntas de `REPASO.md` con sus palabras. |
 | **Dónde viven los datos ahora** | En **MongoDB** (base `tienda_tech`, colección `productos`), cuyos archivos están en `mongodb/datos/`. Sobreviven a recargar la web y a reiniciar el backend. |
-| **Cómo arrancar lo que hay** | Tres terminales, **en este orden**: (0) en la carpeta del proyecto: `./mongodb/bin/mongod --dbpath mongodb/datos --bind_ip 127.0.0.1 --port 27017` → se queda en marcha. (1) en `backend`: `npm run start` → espera "API lista en http://localhost:3000/productos". (2) en `frontend`: `npx http-server -p 8080` → abrir `http://localhost:8080`. Para parar cada uno: Ctrl + C en su terminal. |
+| **Cómo arrancar lo que hay** | Tres terminales, **en este orden**: (0) en la carpeta del proyecto: `./mongodb/bin/mongod --dbpath mongodb/datos --bind_ip 127.0.0.1 --port 27017` → se queda en marcha. (1) en `backend`: `npm run start` → espera "API lista en http://localhost:3000/productos". (2) en `frontend`: `npx http-server -a 127.0.0.1 -p 8080` → abrir `http://localhost:8080`. Para parar cada uno: Ctrl + C en su terminal. Las 3 piezas solo aceptan conexiones desde este Mac. |
 | **Pendientes / dudas abiertas** | Ver sección "Pendientes" al final |
 
 ### Recorrido de los datos hoy
@@ -200,6 +200,31 @@ El equipo pidió: "asegúrate de que la fase 1 está cerrada y sigue con la fase
 - El equipo aprobó cerrar la fase ("sí").
 - Commit **"fase 3"** (backend con Mongoose, `.gitignore`, `CLAUDE.md`, `BITACORA.md`) y `git push` a GitHub. La carpeta `mongodb/` (programa y datos) no se sube.
 
+### 2026-11-20 — Fase 4: Repaso
+
+- Se propuso hacerlo paso a paso con el equipo; el equipo pidió: **"genéralo todo tú"**.
+- Claude arrancó las 3 piezas en orden (MongoDB → backend → web) y siguió una petición real de principio a fin:
+  - A. GET de la web (`http-server`, 200).
+  - B. GET `/productos`: los 3 ejemplos, que se cargaron solos en MongoDB al arrancar con la colección vacía.
+  - C. Preflight CORS (`OPTIONS`, 204, permiso para `localhost:8080`).
+  - D. POST del producto "Monitor UltraFine 27" (LG) → **201 Created**, `_id` `6b003592222159c1f4f1a9da`.
+  - E. Comprobación **directa en MongoDB**, sin pasar por el backend: base `tienda_tech`, colección `productos`, 4 documentos, el monitor está.
+  - F. POST con precio negativo → **400**; no se guardó nada (siguen 4 productos).
+- Todo quedó escrito en **`REPASO.md`** (nuevo): las 3 piezas, el viaje paso a paso con los datos reales, qué hace y qué no hace cada pieza, dónde vivían los datos en cada fase y 8 preguntas para practicar con sus respuestas.
+- `CLAUDE.md`: se añade `REPASO.md` a la estructura de carpetas.
+- El monitor de prueba **se dejó** en la base de datos, como ejemplo del repaso.
+- Las 3 piezas **se dejaron arrancadas** para que el equipo pueda abrir `http://localhost:8080`.
+
+**Observación (pendiente de decidir)**
+- El backend (`:3000`) y `http-server` (`:8080`) escuchan en **todas las conexiones de red** del Mac, no solo en este Mac. Otros ordenadores de la red de clase podrían abrir la web o usar la API. MongoDB, en cambio, solo acepta conexiones de este Mac.
+  - Opción 1: dejarlo así (cómodo para enseñarlo a otros en clase).
+  - Opción 2: limitarlo a este Mac (`app.listen(3000, '127.0.0.1')` y `npx http-server -a 127.0.0.1 -p 8080`).
+  - ✅ **Decisión del equipo: opción 2, limitar a este Mac.** Cambiado `backend/src/main.ts` y el comando de la web en `CLAUDE.md`, `REPASO.md` y esta bitácora.
+
+**Cierre de la fase 4**
+- El equipo aprobó cerrar la fase: commit **"fase 4"** (`REPASO.md`, `main.ts`, `CLAUDE.md`, `BITACORA.md`) y `git push` a GitHub.
+- Sigue pendiente que el equipo responda las preguntas de `REPASO.md` con sus palabras.
+
 ---
 
 ## Pendientes
@@ -212,7 +237,7 @@ El equipo pidió: "asegúrate de que la fase 1 está cerrada y sigue con la fase
 - Revisar las "decisiones tomadas por Claude" de la fase 2 y confirmarlas o cambiarlas.
 - Confirmar los puntos marcados con **(por confirmar)** del 19/11.
 - **Comprobación de la fase 3 por el equipo en el navegador**, si aún no se ha hecho: arrancar las 3 piezas en orden; crear/editar/borrar en la web; parar el backend (Ctrl + C) y arrancarlo de nuevo → los productos **siguen ahí**. Extra: parar también MongoDB y volver a arrancarlo → siguen ahí (están en `mongodb/datos/`).
-- Siguiente fase: **Fase 4 — Repaso** (recorrer una petición de principio a fin; el equipo explica cada pieza).
+- **Fase 4:** leer `REPASO.md` y responder las 8 preguntas con vuestras palabras (es el objetivo de la fase: que el equipo sepa explicar cada pieza).
 
 ---
 

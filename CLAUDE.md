@@ -29,8 +29,8 @@ Consecuencias para tu forma de trabajar:
 
 | Pieza | Tecnología | Detalle |
 |---|---|---|
-| Frontend | HTML, CSS y JavaScript sin frameworks | 3 archivos (`index.html`, `styles.css`, `app.js`), servidos con `npx http-server` en el puerto **8080** |
-| Backend | NestJS | API REST en el puerto **3000** |
+| Frontend | HTML, CSS y JavaScript sin frameworks | 3 archivos (`index.html`, `styles.css`, `app.js`), servidos con `npx http-server -a 127.0.0.1 -p 8080` (puerto **8080**, solo desde este Mac) |
+| Backend | NestJS | API REST en el puerto **3000**, solo desde este Mac (`127.0.0.1`) |
 | Base de datos | MongoDB instalado en local en el Mac | Base `tienda_tech`, colección `productos`, conexión desde NestJS con Mongoose |
 
 Todo se ejecuta **en local**.
@@ -76,6 +76,7 @@ Este contrato (rutas, campos y formato JSON) **no cambia** entre la fase 2 y la 
 proyecto/
 ├── CLAUDE.md
 ├── BITACORA.md     (diario del proyecto: qué hacemos y qué decidimos cada día)
+├── REPASO.md       (fase 4: recorrido de una petición pieza por pieza)
 ├── frontend/
 │   ├── index.html
 │   ├── styles.css
