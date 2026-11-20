@@ -7,8 +7,10 @@ import { ProductoSchema } from './producto.schema.js';
 // y cómo conectarse a la base de datos.
 @Module({
   imports: [
-    // Conexión con MongoDB: este Mac (127.0.0.1), puerto 27017, base de datos "tienda_tech"
-    MongooseModule.forRoot('mongodb://127.0.0.1:27017/tienda_tech'),
+    // Conexión con MongoDB.
+    // En Render: la dirección de MongoDB Atlas (variable MONGODB_URI, secreta, nunca en el código).
+    // En el Mac: este Mac (127.0.0.1), puerto 27017, base de datos "tienda_tech"
+    MongooseModule.forRoot(process.env.MONGODB_URI ?? 'mongodb://127.0.0.1:27017/tienda_tech'),
     // Registra el "modelo" Producto, que es lo que usa el controlador para leer y guardar
     MongooseModule.forFeature([{ name: 'Producto', schema: ProductoSchema }]),
   ],

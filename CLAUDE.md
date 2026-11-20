@@ -38,7 +38,7 @@ Todo se ejecuta **en local**.
 **Fuera de alcance** (no proponer ni introducir salvo que el equipo lo pida):
 
 - Autenticación y usuarios.
-- Despliegue o servicios en la nube.
+- ~~Despliegue o servicios en la nube.~~ → **Añadido a petición del equipo el 2026-11-20 (fase 5):** Render (plan gratuito) para backend y web, MongoDB Atlas (gratis) para la base de datos, y GitHub Actions para desplegar. Ver `DESPLIEGUE.md`. Los secretos (`MONGODB_URI`, deploy hooks) nunca van en el repositorio.
 - Docker.
 - Frameworks de frontend (React, Vue, etc.).
 - Tests automáticos.
@@ -77,6 +77,9 @@ proyecto/
 ├── CLAUDE.md
 ├── BITACORA.md     (diario del proyecto: qué hacemos y qué decidimos cada día)
 ├── REPASO.md       (fase 4: recorrido de una petición pieza por pieza)
+├── DESPLIEGUE.md   (fase 5: guía para publicar en Render + Atlas + GitHub Actions)
+├── render.yaml     (fase 5: Blueprint de Render, describe backend y web)
+├── .github/workflows/desplegar.yml  (fase 5: GitHub Action que comprueba y despliega)
 ├── frontend/
 │   ├── index.html
 │   ├── styles.css
@@ -136,6 +139,12 @@ El orden de las fases lo fija el profesor y debe respetarse. Cada fase añade un
 ### Fase 4 — Repaso
 - Recorrer juntos una petición de principio a fin (por ejemplo, crear un producto), pieza por pieza.
 - El equipo explica con sus palabras qué hace cada pieza.
+
+### Fase 5 — Despliegue (añadida a petición del equipo el 2026-11-20)
+- **Objetivo:** publicar la aplicación en internet: web y backend en Render (gratis), base de datos en MongoDB Atlas (gratis), y despliegue con GitHub Actions en cada `git push` a `main`.
+- **Archivos:** `render.yaml`, `.github/workflows/desplegar.yml`, guía `DESPLIEGUE.md`. El código usa variables de entorno (`PORT`, `RENDER`, `MONGODB_URI`, `CORS_ORIGIN`) y en el Mac sigue funcionando igual sin ellas.
+- **Comprobación:** abrir la web de Render desde cualquier dispositivo, hacer CRUD, y ver los datos en Atlas.
+- **Idea que se aprende:** las mismas 3 piezas pueden vivir en ordenadores distintos de internet; lo que cambia es la configuración (direcciones y secretos), no el código.
 
 ## 9. Recorrido de una petición (versión final)
 
@@ -197,3 +206,14 @@ Amplíalo a medida que aparezcan términos nuevos (una línea por término).
 - **Esquema:** descripción de la forma de un documento (campos, tipos y reglas) que Mongoose comprueba antes de guardar.
 - **Modelo:** la herramienta de Mongoose, creada a partir del esquema, con la que el backend lee y escribe en una colección.
 - **Vulnerabilidad (npm audit):** fallo de seguridad conocido en algún paquete; importa sobre todo en lo que se publica en internet.
+- **Despliegue:** publicar la aplicación en un servidor de internet para que cualquiera pueda usarla.
+- **Render:** servicio en la nube donde publicamos el backend (Web Service) y la web (Static Site).
+- **MongoDB Atlas:** servicio en la nube de la empresa de MongoDB; guarda nuestra base de datos en internet.
+- **Blueprint (`render.yaml`):** archivo que describe a Render qué piezas crear y con qué ajustes.
+- **GitHub Actions:** pasos automáticos que GitHub ejecuta en sus ordenadores cada vez que se sube código.
+- **Workflow:** el archivo (en `.github/workflows/`) que define esos pasos.
+- **Deploy hook:** dirección secreta de Render que, al llamarla, publica la última versión de un servicio.
+- **Secreto (GitHub):** valor guardado en GitHub que las Actions pueden usar pero nadie puede ver.
+- **Variable de entorno:** valor que se le da a un programa al arrancarlo (puerto, direcciones, contraseñas) sin escribirlo en el código.
+- **Clúster:** en Atlas, el servidor (o grupo de servidores) donde vive la base de datos.
+- **Cold start (arranque en frío):** el minuto que tarda el backend gratuito de Render en despertarse tras 15 minutos sin visitas.

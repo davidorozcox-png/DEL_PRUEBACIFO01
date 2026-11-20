@@ -1,6 +1,9 @@
 // FASE 2: los datos ya NO viven aquí. Viven en el backend (la API en el puerto 3000).
 // Este archivo pide y envía los datos a la API con fetch (peticiones HTTP con JSON).
-const API = 'http://localhost:3000/productos';
+// En el Mac (localhost) se usa la API local; publicada en Render, la API de Render.
+// Si Render os da otra dirección para el backend, cambiadla aquí (ver DESPLIEGUE.md).
+const EN_MI_MAC = location.hostname === 'localhost' || location.hostname === '127.0.0.1';
+const API = (EN_MI_MAC ? 'http://localhost:3000' : 'https://del-pruebacifo01-api.onrender.com') + '/productos';
 
 // Copia de lo último que nos mandó la API (solo para rellenar el formulario al editar)
 let productos = [];

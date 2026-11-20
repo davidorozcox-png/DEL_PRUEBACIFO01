@@ -1,0 +1,34 @@
+# BLUEPRINT DE RENDER: describe las dos piezas que Render debe crear a partir de este repositorio.
+# La base de datos NO está aquí: Render no ofrece MongoDB, así que usamos MongoDB Atlas (gratis).
+#
+# Los despliegues automáticos están apagados (autoDeployTrigger: off):
+# quien manda desplegar es GitHub Actions (.github/workflows/desplegar.yml), con los "deploy hooks".
+
+services:
+  # BACKEND: la API NestJS
+  - type: web
+    name: del-pruebacifo01-api
+    runtime: node
+    plan: free
+    region: frankfurt # la más cercana a España
+    rootDir: backend
+    buildCommand: npm ci && npm run build # descarga paquetes y compila
+    startCommand: node dist/main.js # arranca la API ya compilada
+    healthCheckPath: /productos # Render comprueba que responde antes de darla por buena
+    autoDeployTrigger: off
+    envVars:
+      - key: NODE_VERSION
+        value: "24" # versión de Node.js
+      - key: CORS_ORIGIN
+        value: https://del-pruebacifo01-web.onrender.com # la web que puede usar la API
+      - key: MONGODB_URI
+        sync: false # SECRETO: Render lo pide al crear el servicio (dirección de MongoDB Atlas)
+
+  # FRONTEND: la web (3 archivos, sin compilar)
+  - type: web
+    name: del-pruebacifo01-web
+    runtime: static
+    rootDir: frontend
+    buildCommand: echo "Nada que compilar, la web son 3 archivos"
+    staticPublishPath: .
+    autoDeployTrigger: off

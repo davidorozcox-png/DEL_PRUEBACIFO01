@@ -11,7 +11,7 @@ Sirve para no perder el contexto entre sesiones. **Se lee al empezar cada sesió
 
 | | |
 |---|---|
-| **Fase actual** | **Fase 4 cerrada** (commit "fase 4" subido a GitHub el 2026-11-20). **Todas las fases del proyecto están terminadas.** Queda: que el equipo responda las preguntas de `REPASO.md` con sus palabras. |
+| **Fase actual** | **Fase 5 — Despliegue, en curso.** Hecho: archivos y guía, Atlas (paso 1), permiso `workflow` (paso 2), commit "fase 5" subido. Siguiente: **paso 3 de `DESPLIEGUE.md`** (crear las piezas en Render con el Blueprint). |
 | **Dónde viven los datos ahora** | En **MongoDB** (base `tienda_tech`, colección `productos`), cuyos archivos están en `mongodb/datos/`. Sobreviven a recargar la web y a reiniciar el backend. |
 | **Cómo arrancar lo que hay** | Tres terminales, **en este orden**: (0) en la carpeta del proyecto: `./mongodb/bin/mongod --dbpath mongodb/datos --bind_ip 127.0.0.1 --port 27017` → se queda en marcha. (1) en `backend`: `npm run start` → espera "API lista en http://localhost:3000/productos". (2) en `frontend`: `npx http-server -a 127.0.0.1 -p 8080` → abrir `http://localhost:8080`. Para parar cada uno: Ctrl + C en su terminal. Las 3 piezas solo aceptan conexiones desde este Mac. |
 | **Pendientes / dudas abiertas** | Ver sección "Pendientes" al final |
@@ -225,6 +225,46 @@ El equipo pidió: "asegúrate de que la fase 1 está cerrada y sigue con la fase
 - El equipo aprobó cerrar la fase: commit **"fase 4"** (`REPASO.md`, `main.ts`, `CLAUDE.md`, `BITACORA.md`) y `git push` a GitHub.
 - Sigue pendiente que el equipo responda las preguntas de `REPASO.md` con sus palabras.
 
+### 2026-11-20 — Fase 5: Despliegue en Render (preparación)
+
+- Petición del equipo: *"vamos a subir este fullstack a Render, tenemos cuenta en Render free tier, prepáranos una guía y los archivos necesarios, usa las GitHub Actions"*. El despliegue estaba "fuera de alcance" en `CLAUDE.md` salvo petición del equipo → se añade como **fase 5**.
+- Se consultó la documentación oficial de Render (blueprint, plan gratuito, deploy hooks, versión de Node, variables de entorno). Datos clave:
+  - Render **no ofrece MongoDB** → se usa **MongoDB Atlas** (gratis).
+  - El backend en Render debe escuchar en `0.0.0.0` y en el puerto de la variable `PORT`.
+  - Plan gratuito: el backend se duerme tras 15 min sin visitas y tarda ~1 min en despertar; 750 h/mes.
+  - `autoDeployTrigger: off` apaga el despliegue automático de Render (`autoDeploy: false` está obsoleto).
+  - Node.js por defecto en Render: 24.
+- Prueba en el Mac: el arranque de producción (`node dist/main.js`) falló con `EADDRINUSE` (puerto 3000 ocupado) porque el puerto estaba fijo en el código → confirma que había que leer el puerto de la variable `PORT`.
+
+**Cambios en el código** (en el Mac todo sigue igual; comprobado)
+- `backend/src/main.ts`: puerto = `PORT` o 3000; dirección = `0.0.0.0` solo si existe la variable `RENDER` (la pone Render), si no `127.0.0.1`; CORS = `CORS_ORIGIN` o `http://localhost:8080`.
+- `backend/src/app.module.ts`: base de datos = `MONGODB_URI` o el MongoDB local.
+- `frontend/app.js`: si la web se abre en `localhost` usa `http://localhost:3000`; si no, `https://del-pruebacifo01-api.onrender.com`.
+
+**Archivos nuevos**
+- `render.yaml` (Blueprint): backend `del-pruebacifo01-api` (Node, free, Frankfurt, `npm ci && npm run build`, `node dist/main.js`, health check `/productos`) y web `del-pruebacifo01-web` (static). Ambos con `autoDeployTrigger: off`.
+- `.github/workflows/desplegar.yml`: en cada push a `main` (o a mano): 1) compila el backend con Node 24; 2) si va bien, llama a los deploy hooks de Render (secretos `RENDER_DEPLOY_HOOK_BACKEND` y `RENDER_DEPLOY_HOOK_FRONTEND`).
+- `DESPLIEGUE.md`: guía de 7 pasos + problemas frecuentes + seguridad.
+- `CLAUDE.md`: despliegue pasa a estar en el alcance (fase 5), estructura de carpetas y glosario ampliados.
+
+**Decisiones tomadas por Claude (revisables)**
+| Decisión | Por qué | Alternativa |
+|---|---|---|
+| Base de datos en **MongoDB Atlas** (M0 gratis, AWS Frankfurt) | Render no tiene MongoDB; Atlas es gratis y oficial | Ninguna gratuita en Render |
+| **GitHub Actions despliega** con deploy hooks; Render con auto-deploy apagado | Así la Action decide: si el backend no compila, no se publica nada | `autoDeployTrigger: checksPass` (Render espera a que pase la Action y despliega él solo; sin secretos) |
+| Blueprint `render.yaml` en vez de crear los servicios a mano | Menos clics y los ajustes quedan escritos en el repositorio | Crearlos uno a uno en el panel de Render |
+| Nombres `del-pruebacifo01-api` / `del-pruebacifo01-web` y región Frankfurt | Nombres poco comunes (menos probable que estén ocupados); Frankfurt es lo más cercano a España | Otros nombres o región |
+| La dirección de la API en `app.js` según dónde se abra la web (localhost o no) | Mantiene los 3 archivos de la web, sin pasos de compilación | Un archivo `config.js` generado por Render |
+| Atlas con acceso desde cualquier IP (`0.0.0.0/0`) | Render gratis no tiene IP fija | IP fija (solo en planes de pago) |
+| Node 24 en Render y en la Action | Es la versión por defecto de Render (en el Mac hay Node 26, compatible) | — |
+
+**Aviso importante:** el token actual solo tiene permiso `repo`; para subir `.github/workflows/` hace falta añadirle **`workflow`** (paso 2 de la guía). Por eso **no se ha hecho commit ni push** todavía.
+
+**Avance**
+- Paso 1: el equipo ya tenía la base de datos en MongoDB Atlas. Se le recordó revisar: acceso `0.0.0.0/0`, usuario de base de datos, y `tienda_tech` en la dirección. La dirección **no** se compartió en el chat (es secreta).
+- Paso 2: el equipo añadió el permiso `workflow` al token. Comprobado preguntando a GitHub: permisos `repo, workflow`.
+- Commit **"fase 5"** y `git push`. La GitHub Action se ejecuta por primera vez: se espera que "comprobar" salga bien y que "desplegar" falle con *"Faltan los secretos…"* (los deploy hooks se ponen en el paso 5).
+
 ---
 
 ## Pendientes
@@ -238,6 +278,7 @@ El equipo pidió: "asegúrate de que la fase 1 está cerrada y sigue con la fase
 - Confirmar los puntos marcados con **(por confirmar)** del 19/11.
 - **Comprobación de la fase 3 por el equipo en el navegador**, si aún no se ha hecho: arrancar las 3 piezas en orden; crear/editar/borrar en la web; parar el backend (Ctrl + C) y arrancarlo de nuevo → los productos **siguen ahí**. Extra: parar también MongoDB y volver a arrancarlo → siguen ahí (están en `mongodb/datos/`).
 - **Fase 4:** leer `REPASO.md` y responder las 8 preguntas con vuestras palabras (es el objetivo de la fase: que el equipo sepa explicar cada pieza).
+- **Fase 5:** pasos 1 (Atlas) y 2 (permiso `workflow`) de `DESPLIEGUE.md` → avisar a Claude → commit "fase 5" + push → pasos 3 a 7 (Render, secretos, probar).
 
 ---
 

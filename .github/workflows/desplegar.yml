@@ -1,0 +1,55 @@
+# GITHUB ACTION: cada vez que se sube algo a la rama main, GitHub ejecuta estos pasos en un ordenador suyo.
+#   1. "comprobar": descarga el proyecto y compila el backend. Si falla, se para aquí y NO se despliega.
+#   2. "desplegar": avisa a Render (deploy hooks) para que publique la versión nueva del backend y de la web.
+# También se puede lanzar a mano: pestaña "Actions" de GitHub → "Desplegar en Render" → "Run workflow".
+
+name: Desplegar en Render
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+jobs:
+  comprobar:
+    name: Comprobar que el backend compila
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: backend
+    steps:
+      - name: Descargar el proyecto
+        uses: actions/checkout@v5
+
+      - name: Preparar Node.js 24 (la misma versión que en Render)
+        uses: actions/setup-node@v5
+        with:
+          node-version: 24
+          cache: npm
+          cache-dependency-path: backend/package-lock.json
+
+      - name: Descargar paquetes
+        run: npm ci
+
+      - name: Compilar el backend
+        run: npm run build
+
+  desplegar:
+    name: Desplegar en Render
+    needs: comprobar # solo si "comprobar" ha ido bien
+    runs-on: ubuntu-latest
+    steps:
+      - name: Avisar a Render (backend y web)
+        env:
+          HOOK_BACKEND: ${{ secrets.RENDER_DEPLOY_HOOK_BACKEND }}
+          HOOK_FRONTEND: ${{ secrets.RENDER_DEPLOY_HOOK_FRONTEND }}
+        run: |
+          if [ -z "$HOOK_BACKEND" ] || [ -z "$HOOK_FRONTEND" ]; then
+            echo "Faltan los secretos RENDER_DEPLOY_HOOK_BACKEND y/o RENDER_DEPLOY_HOOK_FRONTEND (ver DESPLIEGUE.md, paso 5)"
+            exit 1
+          fi
+          echo "Desplegando backend..."
+          curl -fsS -X POST "$HOOK_BACKEND" > /dev/null
+          echo "Desplegando web..."
+          curl -fsS -X POST "$HOOK_FRONTEND" > /dev/null
+          echo "Render ha recibido el aviso. El despliegue tarda unos minutos: miradlo en el panel de Render."
