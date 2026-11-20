@@ -1,0 +1,7 @@
+# Archivos que Git debe ignorar (no se guardan en el historial)
+
+# Archivo oculto que macOS crea solo en cada carpeta
+.DS_Store
+
+# Paquetes descargados por npm (aparecerán en la fase 2; se pueden volver a descargar)
+node_modules/

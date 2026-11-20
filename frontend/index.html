@@ -1,0 +1,69 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Tienda Tech</title>
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+  <h1>Tienda Tech</h1>
+
+  <!-- Formulario: sirve tanto para crear como para editar un producto -->
+  <section class="caja">
+    <h2 id="titulo-formulario">Nuevo producto</h2>
+    <form id="formulario">
+      <label>Nombre *
+        <input type="text" id="nombre" required>
+      </label>
+      <label>Marca *
+        <input type="text" id="marca" required>
+      </label>
+      <label>Categoría *
+        <select id="categoria" required>
+          <option value="portátil">portátil</option>
+          <option value="móvil">móvil</option>
+          <option value="tablet">tablet</option>
+          <option value="monitor">monitor</option>
+          <option value="auriculares">auriculares</option>
+          <option value="accesorio">accesorio</option>
+        </select>
+      </label>
+      <label>Precio (€) *
+        <input type="number" id="precio" min="0" step="0.01" required>
+      </label>
+      <label>Stock
+        <input type="number" id="stock" min="0" step="1" placeholder="0">
+      </label>
+      <label class="ancho">Descripción
+        <textarea id="descripcion" rows="2"></textarea>
+      </label>
+      <div class="botones">
+        <button type="submit" id="boton-guardar">Crear producto</button>
+        <button type="button" id="boton-cancelar" hidden>Cancelar</button>
+      </div>
+    </form>
+  </section>
+
+  <!-- Listado: la tabla se rellena desde app.js -->
+  <section class="caja">
+    <h2>Listado de productos</h2>
+    <table>
+      <thead>
+        <tr>
+          <th>Nombre</th>
+          <th>Marca</th>
+          <th>Categoría</th>
+          <th>Precio</th>
+          <th>Stock</th>
+          <th>Descripción</th>
+          <th>Acciones</th>
+        </tr>
+      </thead>
+      <tbody id="listado"></tbody>
+    </table>
+  </section>
+
+  <script src="app.js"></script>
+</body>
+</html>

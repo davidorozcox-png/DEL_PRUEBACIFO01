@@ -1,0 +1,84 @@
+/* Aspecto general de la página */
+body {
+  font-family: system-ui, sans-serif;
+  max-width: 1000px;
+  margin: 0 auto;
+  padding: 20px;
+  background: #f4f5f7;
+  color: #222;
+}
+
+/* Cada bloque (formulario y listado) va en una caja blanca */
+.caja {
+  background: white;
+  padding: 20px;
+  margin-bottom: 20px;
+  border-radius: 8px;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+}
+
+/* Formulario en dos columnas */
+form {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 12px;
+}
+
+label {
+  display: flex;
+  flex-direction: column;
+  font-size: 14px;
+  gap: 4px;
+}
+
+.ancho,
+.botones {
+  grid-column: 1 / -1;
+}
+
+input,
+select,
+textarea {
+  padding: 8px;
+  font-size: 14px;
+  border: 1px solid #ccc;
+  border-radius: 4px;
+}
+
+/* Botones */
+button {
+  padding: 8px 14px;
+  font-size: 14px;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+  background: #2563eb;
+  color: white;
+  margin-right: 6px;
+}
+
+button.secundario {
+  background: #6b7280;
+}
+
+button.peligro {
+  background: #dc2626;
+}
+
+/* Tabla del listado */
+table {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+th,
+td {
+  text-align: left;
+  padding: 8px;
+  border-bottom: 1px solid #e5e7eb;
+  font-size: 14px;
+}
+
+th {
+  background: #f9fafb;
+}
