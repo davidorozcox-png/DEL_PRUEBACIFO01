@@ -188,3 +188,11 @@ Amplíalo a medida que aparezcan términos nuevos (una línea por término).
 - **curl:** comando de la terminal para hacer peticiones HTTP sin navegador.
 - **Preflight:** petición previa (OPTIONS) que el navegador manda para preguntar si tiene permiso CORS antes de un PATCH o DELETE.
 - **node_modules:** carpeta con los paquetes descargados por npm; pesa mucho y no se guarda en Git.
+- **Homebrew:** programa para instalar herramientas en el Mac desde la terminal; necesita un usuario administrador.
+- **Administrador:** usuario del Mac con permiso para instalar cosas en el sistema.
+- **mongod:** el programa servidor de MongoDB; se queda escuchando en el puerto 27017.
+- **Huella SHA-256:** código que identifica un archivo; si coincide con el oficial, el archivo no se ha dañado ni manipulado.
+- **Mongoose:** librería que usa el backend para hablar con MongoDB (guardar, buscar, editar, borrar).
+- **Esquema:** descripción de la forma de un documento (campos, tipos y reglas) que Mongoose comprueba antes de guardar.
+- **Modelo:** la herramienta de Mongoose, creada a partir del esquema, con la que el backend lee y escribe en una colección.
+- **Vulnerabilidad (npm audit):** fallo de seguridad conocido en algún paquete; importa sobre todo en lo que se publica en internet.

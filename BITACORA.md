@@ -11,9 +11,9 @@ Sirve para no perder el contexto entre sesiones. **Se lee al empezar cada sesió
 
 | | |
 |---|---|
-| **Fase actual** | **Fase 2 cerrada** (commit "fase 2" subido a GitHub el 2026-11-20). Siguiente: **Fase 3a — instalar MongoDB** (aún no empezada). |
-| **Dónde viven los datos ahora** | En una lista dentro del backend (`backend/src/productos.controller.ts`), en la memoria del servidor. Al recargar la web se mantienen; al reiniciar el backend se pierden. |
-| **Cómo arrancar lo que hay** | Dos terminales: (1) en `backend`: `npm run start` → espera "API lista en http://localhost:3000/productos". (2) en `frontend`: `npx http-server -p 8080` → abrir `http://localhost:8080` |
+| **Fase actual** | **Fase 3 cerrada** (commit "fase 3" subido a GitHub el 2026-11-20). Siguiente: **Fase 4 — Repaso**. |
+| **Dónde viven los datos ahora** | En **MongoDB** (base `tienda_tech`, colección `productos`), cuyos archivos están en `mongodb/datos/`. Sobreviven a recargar la web y a reiniciar el backend. |
+| **Cómo arrancar lo que hay** | Tres terminales, **en este orden**: (0) en la carpeta del proyecto: `./mongodb/bin/mongod --dbpath mongodb/datos --bind_ip 127.0.0.1 --port 27017` → se queda en marcha. (1) en `backend`: `npm run start` → espera "API lista en http://localhost:3000/productos". (2) en `frontend`: `npx http-server -p 8080` → abrir `http://localhost:8080`. Para parar cada uno: Ctrl + C en su terminal. |
 | **Pendientes / dudas abiertas** | Ver sección "Pendientes" al final |
 
 ### Recorrido de los datos hoy
@@ -23,10 +23,10 @@ Navegador (frontend, :8080)
    │  fetch → petición HTTP con JSON
    ▼
 Backend NestJS (:3000)
-   │  aplica las reglas
+   │  Mongoose → comprueba las reglas (esquema) y hace la consulta
    ▼
-Lista "productos" en la memoria del servidor
-   │
+MongoDB (:27017, base tienda_tech, colección productos)
+   │  resultado
    ▼
 Backend → respuesta JSON → Navegador actualiza el listado
 ```
@@ -145,6 +145,61 @@ El equipo pidió: "asegúrate de que la fase 1 está cerrada y sigue con la fase
 - Se añadió `*.tsbuildinfo` al `.gitignore` (otro archivo generado al compilar).
 - Commit **"fase 2"** (backend, `frontend/app.js`, `.gitignore`, `CLAUDE.md`, `BITACORA.md`) y `git push` a GitHub.
 
+### 2026-11-20 — Fase 3a: instalar y arrancar MongoDB
+
+**Comprobaciones previas:** Homebrew no instalado; Mac con Apple Silicon (arm64), macOS 15.5; MongoDB no instalado; puerto 27017 libre; **el usuario del Mac no es administrador** (no puede instalar Homebrew sin la contraseña de un administrador).
+
+**Opciones presentadas al equipo**
+| Opción | Ventajas | Inconvenientes |
+|---|---|---|
+| **MongoDB dentro del proyecto** ✅ elegida | Sin contraseña ni administrador; no toca el sistema; para quitarlo basta con borrar la carpeta | Hay que arrancarlo a mano con un comando cada vez |
+| Homebrew (lo que preveía `CLAUDE.md`) | Puede arrancar solo con el Mac | Necesita un administrador; instala en el sistema |
+| Preguntar al profesor | — | Paraba el trabajo |
+
+**Qué se hizo**
+1. Se consultó la lista oficial de versiones (`downloads.mongodb.org/full.json`) → última estable para Mac arm64: **MongoDB 9.0.8**.
+2. Se añadió `mongodb/` al `.gitignore` (el programa y los datos no se suben a GitHub).
+3. Descarga desde `fastdl.mongodb.org` a una carpeta temporal y **comprobación de la huella SHA-256** → coincide (archivo original).
+4. Se copió el programa a `mongodb/bin/mongod` (≈377 MB) y se creó `mongodb/datos/` para los datos.
+5. Arranque: `./mongodb/bin/mongod --dbpath mongodb/datos --bind_ip 127.0.0.1 --port 27017`.
+   - `--dbpath`: dónde se guardan los datos (dentro del proyecto).
+   - `--bind_ip 127.0.0.1`: solo acepta conexiones de este Mac, no de la red de clase.
+6. Comprobado: MongoDB escucha en `localhost:27017` y ha creado sus archivos en `mongodb/datos/`.
+
+**Decisiones**
+| Decisión | Por qué |
+|---|---|
+| No se instala `mongosh` (la consola de MongoDB) ni Compass (programa visual) | No son imprescindibles: el backend habla con MongoDB y los datos se ven por la API. Se pueden añadir si el equipo quiere "mirar dentro" de la base de datos |
+| La base `tienda_tech` y la colección `productos` no se crean a mano | MongoDB las crea solas la primera vez que el backend guarde un producto |
+
+### 2026-11-20 — Fase 3b: conectar el backend a MongoDB
+
+- Aprobado por el equipo, incluida la carga de productos de ejemplo.
+- Comando (en `backend/`): `npm install mongoose @nestjs/mongoose` → Mongoose 9.12.2 y @nestjs/mongoose 12.0.1.
+- Archivos (todos en `backend/src/`; **el frontend no cambia**):
+  - `producto.schema.ts` (**nuevo**): el **esquema**, es decir, la forma de un producto y sus reglas (obligatorios, categoría de la lista, precio ≥ 0, stock entero ≥ 0 y por defecto 0), con mensajes en castellano.
+  - `app.module.ts`: conexión a `mongodb://127.0.0.1:27017/tienda_tech` y registro del modelo `Producto`.
+  - `productos.controller.ts`: la lista en memoria desaparece; cada ruta consulta MongoDB a través del modelo. La función `validar` de la fase 2 desaparece: ahora las reglas las aplica el esquema.
+- El `_id` ya lo genera MongoDB (texto de 24 caracteres, p. ej. `6b002f58f9bde09da73567ae`). El frontend no ha tenido que cambiar porque el campo siempre se llamó `_id`.
+- Comprobado con `curl`: los 5 endpoints funcionan; `_id` inexistente → 404; datos incorrectos → 400 con mensajes en castellano; CORS sigue activo.
+- **Prueba clave:** se creó, editó y borró un producto, se **reinició el backend** y los cambios **seguían ahí**.
+- Después se borraron los productos de prueba (la próxima vez que arranque el backend, se cargan los 3 de ejemplo) y se pararon MongoDB, backend y web.
+
+**Avisos que dio npm (explicados)**
+- "5 vulnerabilities": `npm audit` muestra que están **solo en herramientas de desarrollo** (las que compilan el código), no en lo que usa la aplicación (`npm audit --omit=dev` → 0 vulnerabilidades). Como todo funciona solo en este Mac, no hay riesgo real. **No se aplicó** `npm audit fix --force` porque puede romper NestJS.
+- "install scripts not yet covered by allowScripts: fsevents": npm avisa de que un paquete (para vigilar cambios de archivos en Mac) quiere ejecutar un script de instalación y no se le ha dado permiso. No hace falta: todo funciona igual.
+
+**Decisiones**
+| Decisión | Por qué | Alternativa |
+|---|---|---|
+| Esquema escrito con `new Schema({...})` de Mongoose | Se lee como una tabla de campos y reglas | El estilo típico de NestJS con decoradores (`@Schema`, `@Prop`) |
+| Para editar: buscar el producto, cambiar campos y guardar (`save`) | Así se comprueban **todas** las reglas también al editar | `findByIdAndUpdate`, que no comprueba bien los obligatorios |
+| Los 3 productos de ejemplo se cargan solo si la colección está vacía | Ver algo al abrir la web sin duplicar datos | Empezar vacía |
+
+**Cierre de la fase 3**
+- El equipo aprobó cerrar la fase ("sí").
+- Commit **"fase 3"** (backend con Mongoose, `.gitignore`, `CLAUDE.md`, `BITACORA.md`) y `git push` a GitHub. La carpeta `mongodb/` (programa y datos) no se sube.
+
 ---
 
 ## Pendientes
@@ -156,7 +211,8 @@ El equipo pidió: "asegúrate de que la fase 1 está cerrada y sigue con la fase
   4. Probar un endpoint en el navegador: abrir `http://localhost:3000/productos` → se ve el JSON.
 - Revisar las "decisiones tomadas por Claude" de la fase 2 y confirmarlas o cambiarlas.
 - Confirmar los puntos marcados con **(por confirmar)** del 19/11.
-- Siguiente fase: **Fase 3a — instalar MongoDB** (se explicará y se esperará aprobación; requiere instalar en el sistema).
+- **Comprobación de la fase 3 por el equipo en el navegador**, si aún no se ha hecho: arrancar las 3 piezas en orden; crear/editar/borrar en la web; parar el backend (Ctrl + C) y arrancarlo de nuevo → los productos **siguen ahí**. Extra: parar también MongoDB y volver a arrancarlo → siguen ahí (están en `mongodb/datos/`).
+- Siguiente fase: **Fase 4 — Repaso** (recorrer una petición de principio a fin; el equipo explica cada pieza).
 
 ---
 

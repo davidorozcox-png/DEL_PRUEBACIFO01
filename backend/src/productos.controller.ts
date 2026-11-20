@@ -5,106 +5,85 @@ import {
   Delete,
   Get,
   NotFoundException,
+  OnModuleInit,
   Param,
   Patch,
   Post,
 } from '@nestjs/common';
+import { InjectModel } from '@nestjs/mongoose';
+import { Error as ErrorMongoose, isValidObjectId, Model } from 'mongoose';
 
-// Forma de un producto (igual que en el frontend)
-interface Producto {
-  _id: string;
-  nombre: string;
-  marca: string;
-  categoria: string;
-  precio: number;
-  stock: number;
-  descripcion: string;
-}
+// FASE 3: los datos ya NO viven en una lista del servidor.
+// Se guardan en MongoDB (base "tienda_tech", colección "productos") y sobreviven a los reinicios.
 
-const CATEGORIAS = ['portátil', 'móvil', 'tablet', 'monitor', 'auriculares', 'accesorio'];
-
-// FASE 2: los datos viven en esta lista, dentro de la memoria del servidor.
-// Al reiniciar el backend, la lista vuelve a empezar con estos productos de ejemplo.
-let productos: Producto[] = [
-  { _id: '1', nombre: 'MacBook Air', marca: 'Apple', categoria: 'portátil', precio: 1199, stock: 5, descripcion: '' },
-  { _id: '2', nombre: 'Galaxy S24', marca: 'Samsung', categoria: 'móvil', precio: 899, stock: 10, descripcion: '' },
-  { _id: '3', nombre: 'WH-1000XM5', marca: 'Sony', categoria: 'auriculares', precio: 349, stock: 0, descripcion: '' },
+// Productos de ejemplo: solo se guardan si la colección está vacía
+const EJEMPLOS = [
+  { nombre: 'MacBook Air', marca: 'Apple', categoria: 'portátil', precio: 1199, stock: 5 },
+  { nombre: 'Galaxy S24', marca: 'Samsung', categoria: 'móvil', precio: 899, stock: 10 },
+  { nombre: 'WH-1000XM5', marca: 'Sony', categoria: 'auriculares', precio: 349, stock: 0 },
 ];
 
-// REGLAS: comprueba los datos recibidos. Si algo falla, responde con error 400.
-// "parcial" = true al editar: solo se comprueban los campos que llegan.
-function validar(datos: Partial<Producto>, parcial: boolean) {
-  const errores: string[] = [];
-  const falta = (campo: keyof Producto) => !parcial && datos[campo] === undefined;
-
-  if (falta('nombre') || (datos.nombre !== undefined && String(datos.nombre).trim() === ''))
-    errores.push('nombre es obligatorio');
-  if (falta('marca') || (datos.marca !== undefined && String(datos.marca).trim() === ''))
-    errores.push('marca es obligatoria');
-  if (falta('categoria') || (datos.categoria !== undefined && !CATEGORIAS.includes(datos.categoria)))
-    errores.push('categoria debe ser una de: ' + CATEGORIAS.join(', '));
-  if (falta('precio') || (datos.precio !== undefined && !(typeof datos.precio === 'number' && datos.precio >= 0)))
-    errores.push('precio es obligatorio y debe ser un número mayor o igual que 0');
-  if (datos.stock !== undefined && !(Number.isInteger(datos.stock) && datos.stock >= 0))
-    errores.push('stock debe ser un número entero mayor o igual que 0');
-
-  if (errores.length > 0) throw new BadRequestException(errores);
-}
-
-// Busca un producto por su _id; si no existe, responde con error 404
-function buscar(id: string): Producto {
-  const producto = productos.find((p) => p._id === id);
-  if (!producto) throw new NotFoundException('No existe un producto con _id ' + id);
-  return producto;
+// Si MongoDB rechaza los datos por no cumplir las reglas del esquema, responde con error 400
+function errorDeDatos(error: unknown): never {
+  if (error instanceof ErrorMongoose.ValidationError) {
+    throw new BadRequestException(Object.values(error.errors).map((e) => e.message));
+  }
+  throw error;
 }
 
 // Todas las rutas de este archivo empiezan por /productos
 @Controller('productos')
-export class ProductosController {
+export class ProductosController implements OnModuleInit {
+  // "modelo" = la herramienta de Mongoose para leer y guardar productos en MongoDB
+  constructor(@InjectModel('Producto') private modelo: Model<any>) {}
+
+  // Al arrancar el backend: si no hay productos, guarda los de ejemplo
+  async onModuleInit() {
+    if ((await this.modelo.countDocuments()) === 0) {
+      await this.modelo.insertMany(EJEMPLOS);
+    }
+  }
+
+  // Busca un producto por su _id; si no existe, responde con error 404
+  private async buscar(id: string) {
+    const producto = isValidObjectId(id) ? await this.modelo.findById(id) : null;
+    if (!producto) throw new NotFoundException('No existe un producto con _id ' + id);
+    return producto;
+  }
+
   // GET /productos → listar todos
   @Get()
   listar() {
-    return productos;
+    return this.modelo.find();
   }
 
   // GET /productos/:id → ver uno
   @Get(':id')
   ver(@Param('id') id: string) {
-    return buscar(id);
+    return this.buscar(id);
   }
 
-  // POST /productos → crear
+  // POST /productos → crear (MongoDB genera el _id)
   @Post()
-  crear(@Body() datos: Partial<Producto>) {
-    validar(datos, false);
-    const nuevo: Producto = {
-      _id: String(Date.now()), // en la fase 3 lo generará MongoDB
-      nombre: String(datos.nombre).trim(),
-      marca: String(datos.marca).trim(),
-      categoria: datos.categoria!,
-      precio: datos.precio!,
-      stock: datos.stock ?? 0, // si no llega, vale 0
-      descripcion: (datos.descripcion ?? '').trim(),
-    };
-    productos.push(nuevo);
-    return nuevo;
+  async crear(@Body() datos: any) {
+    const { _id, ...campos } = datos ?? {};
+    return this.modelo.create(campos).catch(errorDeDatos);
   }
 
   // PATCH /productos/:id → editar (solo cambia los campos que llegan)
   @Patch(':id')
-  editar(@Param('id') id: string, @Body() datos: Partial<Producto>) {
-    const producto = buscar(id);
-    validar(datos, true);
-    const { _id, ...cambios } = datos; // el _id no se puede cambiar
-    Object.assign(producto, cambios);
-    return producto;
+  async editar(@Param('id') id: string, @Body() datos: any) {
+    const producto = await this.buscar(id);
+    const { _id, ...cambios } = datos ?? {}; // el _id no se puede cambiar
+    producto.set(cambios);
+    return producto.save().catch(errorDeDatos);
   }
 
   // DELETE /productos/:id → borrar
   @Delete(':id')
-  borrar(@Param('id') id: string) {
-    const producto = buscar(id);
-    productos = productos.filter((p) => p._id !== id);
+  async borrar(@Param('id') id: string) {
+    const producto = await this.buscar(id);
+    await producto.deleteOne();
     return producto;
   }
 }

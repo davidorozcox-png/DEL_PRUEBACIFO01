@@ -9,3 +9,6 @@ node_modules/
 # Código compilado que NestJS genera al arrancar (se vuelve a crear solo)
 dist/
 *.tsbuildinfo
+
+# MongoDB instalado dentro del proyecto (programa y datos; pesa mucho y es de este Mac)
+mongodb/
